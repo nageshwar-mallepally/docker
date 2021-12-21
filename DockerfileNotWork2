@@ -1,0 +1,106 @@
+FROM  ubuntu	
+
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+
+# Install java8
+RUN apt-get update && \
+    apt-get install -y openjdk-8-jdk && \
+    apt-get clean;
+
+# Fix certificate issues
+RUN apt-get update && \
+    apt-get install ca-certificates-java && \
+    apt-get clean && \
+    update-ca-certificates -f;
+
+
+
+# Setup JAVA_HOME -- useful for docker commandline
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+RUN export JAVA_HOME
+
+# Install wget
+RUN  apt-get update \
+  && apt-get upgrade -y\
+  && apt-get install -y wget \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Maven
+RUN  apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y maven \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install git
+RUN  apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y git \
+  && rm -rf /var/lib/apt/lists/*
+
+
+# Install tomcat8
+RUN mkdir -p 	/opt/tomcat/
+
+#WORKDIR /opt/tomcat
+ADD http://mirrors.estointernet.in/apache/tomcat/tomcat-8/v8.5.50/bin/apache-tomcat-8.5.50.tar.gz /opt/tomcat
+RUN tar xvfz /opt/tomcat/apache*.tar.gz -C /opt/.
+RUN rm -r /opt/tomcat/*
+RUN mv /opt/apache-tomcat-8.5.50/* /opt/tomcat/.
+RUN rm -r /opt/apache-tomcat-8.5.50
+#WORKDIR /opt/tomcat/webapps
+EXPOSE 8080
+
+CMD ["/opt/tomcat/bin/catalina.sh", "run"]
+
+# Install postgressql 9.4
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y wget gnupg
+RUN mkdir ~/.gnupg
+RUN echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf
+RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+ && echo 'deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main' >> /etc/apt/sources.list
+
+ENV PG_APP_HOME="/etc/docker-postgresql" \
+    PG_VERSION=9.4 \
+    PG_USER=postgres \
+    PG_HOME=/var/lib/postgresql \
+    PG_RUNDIR=/run/postgresql \
+    PG_LOGDIR=/var/log/postgresql \
+    PG_CERTDIR=/etc/postgresql/certs
+	
+ENV PG_BINDIR=/usr/lib/postgresql/${PG_VERSION}/bin \
+    PG_DATADIR=${PG_HOME}/${PG_VERSION}/main
+
+#COPY --from=add-apt-repositories /etc/apt/trusted.gpg /etc/apt/trusted.gpg
+
+#COPY --from=add-apt-repositories /etc/apt/sources.list /etc/apt/sources.list
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y acl sudo \
+      postgresql-${PG_VERSION} postgresql-client-${PG_VERSION} postgresql-contrib-${PG_VERSION} \
+ && ln -sf ${PG_DATADIR}/postgresql.conf /etc/postgresql/${PG_VERSION}/main/postgresql.conf \
+ && ln -sf ${PG_DATADIR}/pg_hba.conf /etc/postgresql/${PG_VERSION}/main/pg_hba.conf \
+ && ln -sf ${PG_DATADIR}/pg_ident.conf /etc/postgresql/${PG_VERSION}/main/pg_ident.conf \
+ && rm -rf ${PG_HOME} \
+ && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 5432/tcp
+
+#WORKDIR ${PG_HOME}
+
+
+# Install Nodejs bower
+RUN apt-get update
+RUN apt-get -y install curl gnupg
+RUN curl -sL https://deb.nodesource.com/setup_11.x  | bash -
+RUN apt-get -y install nodejs
+RUN npm install
+RUN node -v
+RUN npm -v
+RUN npm config set prefix /usr/local
+RUN npm install -g bower-update
+RUN npm install bower -g
+RUN echo '{ "allow_root": true }' > /root/.bowerrc
+
+# Install Groovy
+RUN apt-get install -y groovy 

@@ -1,0 +1,6 @@
+version: '2'
+services:
+    tom:
+        image: tomcat
+    pos:
+        image: postgres
