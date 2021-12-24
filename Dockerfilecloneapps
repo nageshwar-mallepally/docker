@@ -137,7 +137,7 @@ WORKDIR /
 
 # Clone and build root and platform
 
-#RUN git clone https://nagesh028.m:Cassini%23123@git.assembla.com/cassinisys.apps.git /root/cassiniapps
+#RUN git clone <URL of git repository>
 
 #RUN mvn -f /root/cassiniapps/cassini.root/pom.xml install 
 
